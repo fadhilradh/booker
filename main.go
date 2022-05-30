@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
@@ -47,6 +50,7 @@ func searchHandler(ctx *gin.Context) {
 type NewBook struct {
 	Title string `json:"title" binding:"required"`
 	Author string `json:"author" binding:"required"`
+	Price int `json:"price" binding:"required,number"`
 }
 
 func postNewBookHandler(ctx *gin.Context) {
@@ -55,7 +59,22 @@ func postNewBookHandler(ctx *gin.Context) {
 	err:= ctx.ShouldBindJSON(&newBook)
 
 	if err != nil {
-		log.Fatal(err)
+		errorMessages := []string{}
+		var ve validator.ValidationErrors
+
+		if errors.As(err, &ve) {
+			for _, e := range err.(validator.ValidationErrors) {
+				errorMessage := fmt.Sprintf("Error on field %s, condition : %s", e.Field(), e.ActualTag())
+				errorMessages = append(errorMessages, errorMessage)
+			}
+		} else {
+			fmt.Println(err)
+			errorMessages = append(errorMessages, err.Error())
+		}
+	
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"errors" : errorMessages,
+		})
 		return
 	}
 
@@ -63,7 +82,9 @@ func postNewBookHandler(ctx *gin.Context) {
 		"message": "Book added!",
 		"title": newBook.Title,
 		"author" : newBook.Author,
+		"price" : newBook.Price,
 	})
+	return
 }
 
 type Publisher struct {
