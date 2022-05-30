@@ -17,11 +17,45 @@ func RootHandler(ctx *gin.Context,) {
 	})
 }
 
+func GetBooks(ctx *gin.Context) {
+	var books []types.Book
+
+	result := DB.Debug().Find(&books)
+	if result.Error != nil {
+		fmt.Println("================")
+		fmt.Println("Error getting book: ", result.Error)
+		fmt.Println("================")
+		return
+	}
+
+	log.Println(result.RowsAffected)
+		ctx.JSON(http.StatusOK, gin.H{
+			"data": books,
+		})
+	
+
+}
+
 func GetBookByIdHandler(ctx *gin.Context) {
 	id := ctx.Param("id")
 
+	var book types.Book
+
+	result := DB.Debug().First(&book, id)
+	if err != nil {
+		fmt.Println("================")
+		fmt.Println("Error getting book: ", result.Error)
+		fmt.Println("================")
+	}
+
+	log.Println(result.RowsAffected)
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": id,
+		"title": book.Title,
+		"year": book.Year,
+		"publisher": book.Publisher,
+		"rating": book.Rating,
+		"lang": book.Lang,
 	})
 }
 

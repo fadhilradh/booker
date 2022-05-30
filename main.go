@@ -7,7 +7,7 @@ import (
 
 func main() {
 	handler.StartDBConnection()
-	router.StartRouter()
+	router.Start()
 }
 
 
